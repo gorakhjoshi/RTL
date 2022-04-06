@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { generateId, getNewExpirationTime } from "./utils/utilities";
+import { AddThoughtForm } from "./AddThoughtForm";
+import { generateId, getNewExpirationTime } from "./utils/utils";
 
 const App = () => {
   const [thoughts, setThoughts] = useState([
@@ -14,11 +15,20 @@ const App = () => {
       expiresAt: getNewExpirationTime(),
     },
   ]);
+
+  const addThought = (thought) => {
+    setThoughts((thoughts) => [thought, ...thoughts]);
+  };
+
   return (
     <div className="App">
       <header>
         <h1>Passing Thoughts</h1>
       </header>
+
+      <main>
+        <AddThoughtForm addThought={addThought} />
+      </main>
     </div>
   );
 };
