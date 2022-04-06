@@ -3,7 +3,7 @@
 In order to use React Testing Library, we will need to include the `@testing-library/react` package in our project by using npm like so:
 
 ```
-npm install @testing-library/react --save-dev
+npm install --save-dev @testing-library/react@latest
 ```
 
 Once we have added `@testing-library/react` to our project, we can import the two essential values, `render` and `screen`, into our tests.
@@ -41,3 +41,20 @@ test('should prints out the contents of the DOM' () => {
 After importing the `render` and `screen` values from `'@testing-library/react'`, a test is created using the `test()` function from the Jest testing framework. Inside, the `<Greeting>` component is virtually rendered and then the resulting virtual DOM is printed via the `screen.debug()` method.
 
 Notice how the output shows the rendered contents of `<Greeting>` (an `<h1>` element) and not the component itself. As was mentioned in the first exercise, React Testing Library strives to produce a testing environment that is as close to the user’s experience as possible.
+
+Now, let’s get started with testing the Passing Thoughts application!
+
+## Exercise
+
+1. To verify that you have successfully added the package to your project, navigate to `package.json` and check that `"@testing-library/react"` appears in the `"devDependencies"` array.
+
+2. Create `Thought.test.js` file and import `render()` and `screen` from @testing-library/react.
+
+3. Now, let’s try rendering the `<Thought />` component in our test. Inside the provided `test()` in `Thought.test.js` call the `render()` function and pass in the `<Thought />` component. The `<Thought />` component expects 2 props:
+
+   - `thought`: use the provided thought object
+   - `removeThought`: pass an empty function () => {}
+
+4. Now, after the call to `render()`, call `screen.debug()` to see the rendered component.
+
+5. In your terminal, run the `npm test` command to run the test. What do you see?
