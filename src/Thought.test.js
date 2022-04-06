@@ -1,15 +1,19 @@
 import React from "react";
 import { Thought } from "./Thought.js";
-
-// import render and screen here
+import App from "./App.js";
 import { render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom";
 
-test("Display the Thought component", () => {
-  // Pass to Thought component as thought prop
-  const thought = { text: "learn react testing library" };
-  // Add your testing logic here
-  render(<Thought thought={thought} removeThought={() => {}} />);
+test("Should have header text Passing Thoughts", () => {
+  render(<App />);
+  // Test App header text here
+  const header = screen.getByText("Passing Thoughts");
+  expect(header).toHaveTextContent("Passing Thoughts");
+});
 
-  // eslint-disable-next-line testing-library/no-debugging-utils
-  screen.debug();
+test("Should have button enabled", () => {
+  render(<Thought thought={{ text: "Hello" }} removeThought={() => {}} />);
+  // Test status of button here
+  const button = screen.getByRole("button");
+  expect(button).toBeEnabled();
 });
