@@ -1,7 +1,26 @@
-import React from "react";
+import { useState } from "react";
+import { generateId, getNewExpirationTime } from "./utils/utilities";
 
 const App = () => {
-  return <div>App</div>;
+  const [thoughts, setThoughts] = useState([
+    {
+      id: generateId(),
+      text: "This is a place for your passing thoughts.",
+      expiresAt: getNewExpirationTime(),
+    },
+    {
+      id: generateId(),
+      text: "They'll be removed after 15 seconds.",
+      expiresAt: getNewExpirationTime(),
+    },
+  ]);
+  return (
+    <div className="App">
+      <header>
+        <h1>Passing Thoughts</h1>
+      </header>
+    </div>
+  );
 };
 
 export default App;
