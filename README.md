@@ -1,85 +1,80 @@
-# Mimicking User Interactions
+# The waitFor() method
 
-So far we’ve learned how to query and extract the different DOM nodes from our React components. Now, it’s time for us to learn how to mimic user interactions e.g. clicking a checkbox, typing text, etc. Once again, this entire process has been made easier for us with the help of another library in the @testing-library suite: @testing-library/user-event.
+In the previous exercise we’ve learned about the `.findByX` query methods that allows us to test components that render asynchronously. But what about components that disappear asynchronously?
 
-The library can be installed with the command below:
-
-```
-npm install --save-dev @testing-library/user-event@13.2.1
-```
-
-This library exports a single object, `userEvent`, that can imported in a test file like so:
+Look at the example below. We have a component that displays a header. This header is removed after 250 ms when the button “Remove Header” is clicked.
 
 ```jsx
-import userEvent from "@testing-library/user-event";
-```
-
-The `userEvent` object contains many built-in methods that allow us to mimic user interactions. Typically, they follow the same syntax pattern:
-
-Here is an example where we mimic a user filling in a text box. Note that in this case, a second argument is provided as the text to be typed into the box.
-
-```jsx
-import React from "react";
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import "@testing-library/jest-dom";
-
-const GreetingForm = () => {
+// file: header.js
+export const Header = () => {
+  const handleClick = () => {
+    setTimeout(() => {
+      document.querySelector("h1").remove();
+    }, 250);
+  };
   return (
-    <form>
-      <label htmlFor="greeting">Greeting:</label>
-      <input type="text" id="greeting" />
-      <input type="submit" value="Submit" />
-    </form>
+    <div>
+      <h1>Hey Everybody</h1>
+      <button onClick={handleClick}>Remove Header</button>
+    </div>
   );
 };
+```
 
-test("should show text content as Hey Mack!", () => {
-  // Render the component to test
-  render(<GreetingForm />);
-  // Extract the textbox component
-  const textbox = screen.getByRole("textbox");
-  // Simulate typing 'Hey Mack!'
-  userEvent.type(textbox, "Hey Mack!");
-  // Assert textbox has text content 'Hey Mack!'
-  expect(textbox).toHaveValue("Hey Mack!");
+How would you test that the header is removed? Using `screen.findByX()` methods won’t work because there won’t be an element to query for once it’s removed! Using only `screen.queryByX()` methods won’t work either as the component is removed asynchronously.
+
+Fortunately, RTL provides another function that can be used for asynchronous testing that will be perfect for this scenario - the `waitFor()` function. In order to use this function, we need to import it from `@testing-library/react`.
+
+```jsx
+import { waitFor } from "@testing-library/react";
+```
+
+As with the other async functions, the `waitFor()` function returns a Promise, so we have to preface its call with the `await` keyword. It takes a callback function as an argument where we can make asynchronous function calls, perform queries, and/or run assertions.
+
+```jsx
+await waitFor(() => {
+  expect(someAsyncMethod).toHaveBeenCalled();
+  const someAsyncNode = screen.getByText("hello world");
+  expect(someAsyncNode).toBeInTheDocument();
 });
 ```
 
-In the example above, the `userEvent.type()` method is used which accepts a DOM node to interact with (`textbox`) and a string to type into that node (`’Hey Mack!’).
+Now, let’s get back to the example. To test that a component disappears asynchronously, we can combine the waitFor() function with .queryByX() methods:
 
-The userEvent object has methods for [simulating clicks](https://testing-library.com/docs/ecosystem-user-event/#clickelement-eventinit-options) (userEvent.click()), [hovering](https://testing-library.com/docs/ecosystem-user-event/#hoverelement) (userEvent.hover()), and much more. Once again, instead of memorizing all of these, it is recommended that you read the [docs](https://github.com/testing-library/user-event) to find the method best suited for your needs.
+```jsx
+import { waitFor, render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import userEvent from "@testing-library/user-event";
+import { Header } from "./heaader.js";
+
+test("should remove header display", async () => {
+  // Render Header
+  render(<Header />);
+  // Extract button node
+  const button = screen.getByRole("button");
+  // click button
+  userEvent.click(button);
+
+  // Wait for the element to be removed asynchronously
+  await waitFor(() => {
+    const header = screen.queryByText("Hey Everybody");
+    expect(header).toBeNull();
+  });
+});
+```
+
+In our unit test, the header will be removed 250ms after the button has been clicked. The callback function inside `waitFor()` confirms this by querying for this element and then waiting for the `expect()` assertion to pass.
+
+The `waitFor()` method can also optionally accept an `options` object as a second argument. This object can be used to control how long to wait for before aborting and much more. Though the details of this `options` object are beyond the scope of the lesson, you can read more about it in the [docs](https://testing-library.com/docs/dom-testing-library/api-async/#waitfor).
 
 ## Exercise
 
-1. Let’s now use `userEvent` to mimic user interactions in our tests for Passing Thoughts.
+1. In the provided test in the **Thought.test.js** file, there is code that mimics a user posting a thought with the text content `'I have to call my mom.'`. The test then attempts to test that the thought will eventually disappear, however it fails (verify this by running `npm test`)! Let’s introduce the `waitFor()` function to fix this test.
 
-   First, install `@testing-library/user-event@13.2.1` as a developer dependency.
+   In **Thought.test.js** import waitFor from @testing-library/react
 
-   To verify that you have successfully added the package to your project, navigate to **package.json** and check that `@testing-library/user-event` appears in the dependencies array.
+2. Use `waitFor() `to assert that this thought will eventually be removed from the DOM. Your callback should be written using arrow-function syntax.
 
-2. In **Thought.test.js** import userEvent from `@testing-library/user-event`.
+   Note: We’ve modified the code in the App for this exercise so that thoughts disappear after 250ms instead of 15s (see the `getNewExpirationTime()` function in utils.js). This is because 15s is a long time to wait and see if our test passes!
 
-3. In the first test of** Thought.test.js**, we would like to remove the thought with the text `'This is a place for your passing thoughts'` that is added as the first thought when the application first renders (refresh the browser to see it).
-   We’ve started this test for you:
-
-   1. We render the App component
-   2. We then grab the first '×' button.
-   3. Finally, later in the test, we check to see if that element is null.
-
-   This test will fail unless we mimic clicking on the button in between steps 2 and 3 (verify this by running `npm test`).
-
-   Use a method from the `userEvent` object to mimic a user pressing the retrieved `button` so that the final `expect()` assertion passes. Then, run `npm test` to see that the first test now passes!
-
-4. In the second test of **Thought.test.js** file we’d like to mimic adding a new thought. We’ve started this test for you:
-
-   1. At the top of the test, we render App
-   2. Then we grab the `input` element where a user can type the thought and the `submit` button to add the thought.
-   3. At the end of the test we assert that a thought with the text `'Did I forget my keys?'` was added to the DOM.
-   4. This test will fail unless we mimic typing into the input and clicking the `submit` button in between steps 2 and 3.
-
-   First, use a method from the `userEvent` object to mimic a user typing into this `input` element with the text `'Did I forget my keys?'`.
-
-5. Now that we’ve mimicked a user typing `'Did I forget my keys'`, it’s time for us to post this thought by clicking the `submit` button. In the second test of `Thought.test.js`, simulate a user clicking the `submit` button by using a method from the `userEvent` object.
-
-6. Run npm test in your terminal
+3. Run npm test in your terminal
