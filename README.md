@@ -1,12 +1,174 @@
-# The waitFor() method
+# React Testing Library Quiz
 
-In the previous exercise we’ve learned about the `.findByX` query methods that allows us to test components that render asynchronously. But what about components that disappear asynchronously?
+### Q1. Which query method variant returns null, if it can’t find a DOM element and is useful for determining if an element is NOT present in the DOM?
 
-Look at the example below. We have a component that displays a header. This header is removed after 250 ms when the button “Remove Header” is clicked.
+- [ ] .queryByX
+- [ ] .getByX
+- [ ] .findByX
+
+### Q2. Consider the component below. When the user clicks the button the header text is asynchronously replaced with '**Donald Duck**':
 
 ```jsx
-// file: header.js
-export const Header = () => {
+import { useState } from "react";
+
+const App = () => {
+  const [text, setText] = useState("Mickey Mouse");
+
+  const handleClick = () => {
+    setTimeout(() => {
+      setText("Donald Duck");
+    }, 250);
+  };
+
+  return (
+    <div>
+      <h1>{text}</h1>
+      <button onClick={handleClick}>click me</button>
+    </div>
+  );
+};
+
+export default App;
+```
+
+Fill in the code such that we properly assert that the text '**Donald Duck**' asynchronously appears in the DOM?
+
+```jsx
+import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import userEvent '@testing-library/user-event';
+import App from './App'
+
+test('Should show text content of Donald Duck', ____ ()=>{
+  render(<App/>)
+  const button = screen.getByRole('button');
+  userEvent.click(button);
+  const header = ____ screen ____ ('Donald Duck');
+  expect(header).toHaveTextContent('Donald Duck');
+})
+```
+
+Fill these texts
+
+- .queryByText
+- await
+- .findByText
+- async
+- .getByText
+
+### Q3. Consider the component below. It is a simple form which asks the user to enter their name:
+
+```jsx
+const App = () => {
+  return (
+    <div>
+      <h1> What is your name? </p>)
+      <label htmlFor="name">Enter Name:</label>
+      <input id="name">
+      <button type = "submit">Submit </button>
+    </div>
+  );
+};
+
+export default App;
+```
+
+Fill in the code to assert that the header is present in the document and that the button is enabled:
+
+```jsx
+import { render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import App from "./App";
+
+test("Should display content of Header component", () => {
+  render(<App />);
+  const header = ___;
+  const button = ___;
+  // Confirm header is present
+  ___;
+  // Confirm button is enabled
+  ___;
+});
+```
+
+Fill these texts
+
+- expect(header).toBeEnabled();
+- expect(header).ToBeInTheDocument()
+- screen.getByText('What is your name?')
+- screen.getByRole('button')
+- expect(button).toHaveTextContent('What is your name?');
+- screen.query('What is your name?');
+- screen.query('button');
+- expect(button).ToBeEnabled()
+
+### Q4. What is the correct command to install React Testing Library and add it as a developer dependency to your application?
+
+- [ ] npm install react-testing-library
+
+- [ ] npm install --save-dev @testing-library/react
+
+- [ ] npm install @testing-library/react
+
+- [ ] npm install --save-dev
+
+### Q5. Consider the component below. It’s a simple form that asks the user to enter some text:
+
+```jsx
+const Form = () => {
+  return (
+    <div>
+    <label htmlFor="name">Enter Text:</label>
+    <input id="name">
+    <button type = "submit">Submit </button>
+    </div>
+  );
+};
+```
+
+Fill in the code such that the unit test mimics a user typing “Hello” and clicking the submit button.
+
+```jsx
+import { render, screen } from "@testing-library/react";
+import "@testing-library/jest-dom";
+import ___ "@testing-library/user-event";
+
+import Form from "./Form";
+
+test("Should display content of Header component", () => {
+  render(<Form />);
+  const input = screen.getByRole("textbox");
+  ___;
+  const button = screen.getByRole("button");
+  ___;
+});
+```
+
+Fill these texts
+
+- interact
+- userEvent.click(button)
+- type(input, ‘Hello’)
+- userEvent
+- click(button)
+- userEvent.type(input, 'Hello')
+
+### Q6. What is React Testing Library (RTL)?
+
+- [ ] A tool that manages routing in your react applications.
+
+- [ ] A tool that allows one to check the current state and props passed to a React component.
+
+- [ ] A tool that allows one to test React components by checking whether the event handlers associated with a component are updating state as intended.
+
+- [ ] A library for testing React applications. It focuses on testing components from the end-user’s perspective rather than testing the implementation and logic of the underlying React components.
+
+### Q7. Consider the component below which displays the text "How is everybody doing?!" and then removes that text asynchronously after the user clicks on the button:
+
+```jsx
+import { useState } from "react";
+
+const App = () => {
   const handleClick = () => {
     setTimeout(() => {
       document.querySelector("h1").remove();
@@ -14,67 +176,92 @@ export const Header = () => {
   };
   return (
     <div>
-      <h1>Hey Everybody</h1>
+      <h1>How is everybody doing?!</h1>
       <button onClick={handleClick}>Remove Header</button>
     </div>
   );
 };
 ```
 
-How would you test that the header is removed? Using `screen.findByX()` methods won’t work because there won’t be an element to query for once it’s removed! Using only `screen.queryByX()` methods won’t work either as the component is removed asynchronously.
-
-Fortunately, RTL provides another function that can be used for asynchronous testing that will be perfect for this scenario - the `waitFor()` function. In order to use this function, we need to import it from `@testing-library/react`.
+Fill in the code to assert that the header is removed asynchronously after a user clicks the button:
 
 ```jsx
-import { waitFor } from "@testing-library/react";
-```
+import { ___, render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import userEvent '@testing-library/user-event';
+import App from './App';
 
-As with the other async functions, the `waitFor()` function returns a Promise, so we have to preface its call with the `await` keyword. It takes a callback function as an argument where we can make asynchronous function calls, perform queries, and/or run assertions.
-
-```jsx
-await waitFor(() => {
-  expect(someAsyncMethod).toHaveBeenCalled();
-  const someAsyncNode = screen.getByText("hello world");
-  expect(someAsyncNode).toBeInTheDocument();
-});
-```
-
-Now, let’s get back to the example. To test that a component disappears asynchronously, we can combine the waitFor() function with .queryByX() methods:
-
-```jsx
-import { waitFor, render, screen } from "@testing-library/react";
-import "@testing-library/jest-dom";
-import userEvent from "@testing-library/user-event";
-import { Header } from "./heaader.js";
-
-test("should remove header display", async () => {
-  // Render Header
-  render(<Header />);
-  // Extract button node
-  const button = screen.getByRole("button");
-  // click button
+test('should remove header display', ___  () => {
+  render(<App/>);
+  const button = screen.getByRole('button');
   userEvent.click(button);
-
-  // Wait for the element to be removed asynchronously
-  await waitFor(() => {
-    const header = screen.queryByText("Hey Everybody");
-    expect(header).toBeNull();
-  });
+  ___  waitFor(() ___ =>
 });
 ```
 
-In our unit test, the header will be removed 250ms after the button has been clicked. The callback function inside `waitFor()` confirms this by querying for this element and then waiting for the `expect()` assertion to pass.
+Fill these texts
 
-The `waitFor()` method can also optionally accept an `options` object as a second argument. This object can be used to control how long to wait for before aborting and much more. Though the details of this `options` object are beyond the scope of the lesson, you can read more about it in the [docs](https://testing-library.com/docs/dom-testing-library/api-async/#waitfor).
+- expect(screen.findByText('How is everybody doing?!')).toBeNull();
+- waitFor
+- expect(screen.getByText('How is everybody doing?!')).toBeNull();
+- expect(screen.queryByText('How is everybody doing?!')).toBeNull());
+- async
+- wait
+- await
 
-## Exercise
+8. ### Q1. Which query method variant returns null, if it can’t find a DOM element and is useful for determining if an element is NOT present in the DOM?
 
-1. In the provided test in the **Thought.test.js** file, there is code that mimics a user posting a thought with the text content `'I have to call my mom.'`. The test then attempts to test that the thought will eventually disappear, however it fails (verify this by running `npm test`)! Let’s introduce the `waitFor()` function to fix this test.
+```jsx
+const Header = () => {
+  return <h1>Hello friends</h1>;
+};
+```
 
-   In **Thought.test.js** import waitFor from @testing-library/react
+What is the correct code to include this Header component in a React Testing Library (RTL) unit test and then print out its contents?
 
-2. Use `waitFor() `to assert that this thought will eventually be removed from the DOM. Your callback should be written using arrow-function syntax.
+```jsx
+import { render, screen } from "@testing-library/react";
+import Header from "./Header";
 
-   Note: We’ve modified the code in the App for this exercise so that thoughts disappear after 250ms instead of 15s (see the `getNewExpirationTime()` function in utils.js). This is because 15s is a long time to wait and see if our test passes!
+test("Should display content of Header component", () => {
+  render();
+  screen.debug(Header);
+});
+```
 
-3. Run npm test in your terminal
+Not quite. The Header component should be passed to render() and screen.debug() does not take in any arguments.
+
+- [ ] 1.
+
+```jsx
+import ReactDOM from "react-dom";
+import Header from "./Header";
+
+test("Should display content of Header component", () => {
+  ReactDOM.render(<Header />);
+  console.log(Header);
+});
+```
+
+- [ ] 2
+
+```jsx
+import Header from "./Header";
+
+test("Should display content of Header component", () => {
+  render(<Header />);
+  screen.debug();
+});
+```
+
+- [ ] 3
+
+```jsx
+import { render, screen } from "@testing-library/react";
+import Header from "./Header";
+
+test("Should display content of Header component", () => {
+  render(<Header />);
+  screen.debug();
+});
+```
