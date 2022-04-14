@@ -1,95 +1,85 @@
-# Different Query Methods
+# Mimicking User Interactions
 
-Now that we know how to perform queries with .getByX methods, it is time for us to move on to the other query method variants. RTL has two other categories of query methods called `.queryByX` and `.findByX`.
+So far we’ve learned how to query and extract the different DOM nodes from our React components. Now, it’s time for us to learn how to mimic user interactions e.g. clicking a checkbox, typing text, etc. Once again, this entire process has been made easier for us with the help of another library in the @testing-library suite: @testing-library/user-event.
 
-Look at the code below. It shows the code for a simple component that renders a header with the text `'Hello World!'` and then changes the text to `'Goodbye!'` 500ms after the user clicks a button. We will be using this App component to demonstrate the different query types.
+The library can be installed with the command below:
+
+```
+npm install --save-dev @testing-library/user-event@13.2.1
+```
+
+This library exports a single object, `userEvent`, that can imported in a test file like so:
 
 ```jsx
-import { useState } from "react";
+import userEvent from "@testing-library/user-event";
+```
 
-const App = () => {
-  const [text, setText] = useState("Hello World!");
+The `userEvent` object contains many built-in methods that allow us to mimic user interactions. Typically, they follow the same syntax pattern:
 
-  // Changes header text after interval of 500ms
-  const handleClick = () => {
-    setTimeout(() => {
-      setText("Goodbye!");
-    }, 500);
-  };
+Here is an example where we mimic a user filling in a text box. Note that in this case, a second argument is provided as the text to be typed into the box.
 
+```jsx
+import React from "react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import "@testing-library/jest-dom";
+
+const GreetingForm = () => {
   return (
-    <div>
-      <h1>{text}</h1>
-      <button onClick={handleClick}>click me</button>
-    </div>
+    <form>
+      <label htmlFor="greeting">Greeting:</label>
+      <input type="text" id="greeting" />
+      <input type="submit" value="Submit" />
+    </form>
   );
 };
 
-export default App;
-```
-
-Let’s start with the `.queryByX` variants. The `.queryByX` methods return null if they don’t find a DOM node, unlike the `.getByX` methods which throw an error and immediately cause the test to fail. This is useful when asserting that an element is NOT present in the DOM.
-
-In this example, we want to confirm that the header does not (yet) contain the text `'Goodbye'`:
-
-```jsx
-import App from "./components/App";
-import { render, screen } from "@testing-library/react";
-
-test("Header should not show Goodbye yet", () => {
-  // Render App
-  render(<App />);
-  // Attempt to extract the header element
-  const header = screen.queryByText("Goodbye!");
-  // Assert null as we have not clicked the button
-  expect(header).toBeNull();
+test("should show text content as Hey Mack!", () => {
+  // Render the component to test
+  render(<GreetingForm />);
+  // Extract the textbox component
+  const textbox = screen.getByRole("textbox");
+  // Simulate typing 'Hey Mack!'
+  userEvent.type(textbox, "Hey Mack!");
+  // Assert textbox has text content 'Hey Mack!'
+  expect(textbox).toHaveValue("Hey Mack!");
 });
 ```
 
-By using the `.queryByText()`, variant when there is no element with the text `'Goodbye!'`, the value `null` is returned and we can successfully validate this with `expect(header).toBeNull()`. If the `.getByText()` method were used instead, the test would fail immediately due to the error rather than continuing on to the `expect()` assertion.
+In the example above, the `userEvent.type()` method is used which accepts a DOM node to interact with (`textbox`) and a string to type into that node (`’Hey Mack!’).
 
-Next, let’s discuss the `.findByX` variants. The `.findByX` methods are used to query for asynchronous elements which will eventually appear in the DOM. For example, if the user is waiting for the result of an API call to resolve before data is displayed. The `.findByX` methods work by returning a Promise which resolves when the queried element renders in the DOM. As such, the `async/await` keywords can be used to enable asynchronous logic.
-
-In this example, we want to confirm that the `header` will display the text `'Goodbye'` after the button is clicked. This example uses the `userEvent` library, which will be covered in depth in the next exercise, to simulate clicking on the button.
-
-```jsx
-import App from "./components/App";
-import { render, screen } from "@testing-library/react";
-
-test("should show text content as Goodbye", async () => {
-  // Render App
-  render(<App />);
-  // Extract button node
-  const button = screen.getByRole("button");
-  // click button
-  userEvent.click(button);
-  // Wait for the text 'Goodbye!' to appear
-  const header = await screen.findByText("Goodbye!");
-  // Assert header to exist in the DOM
-  expect(header).toBeInTheDocument();
-});
-```
-
-In the example above we use `.findByText()` since the `'Goodbye!'` message does not render immediately. This is because our handleClick() function changes the text after an interval of 500ms. So, we have to wait a bit before the new text is rendered in the DOM.
-
-Observe the async and await keywords in the example above. Remember that findBy methods return a Promise and thus the callback function that carries out the unit test must be identified as async while the screen.`findByText()` method must be preceded by `await`.
-
-Note: Before you start the instructions, go to the `AddThoughtForm.js` file and observe the `handleSubmit()` function. For just this exercise, we’ve modified this function slightly with a `setTimeout()`, so that the thoughts get added asynchronously. Go ahead and post a thought in the App. Notice how there is a slight lag when the thought gets posted after you click the Add button.
+The userEvent object has methods for [simulating clicks](https://testing-library.com/docs/ecosystem-user-event/#clickelement-eventinit-options) (userEvent.click()), [hovering](https://testing-library.com/docs/ecosystem-user-event/#hoverelement) (userEvent.hover()), and much more. Once again, instead of memorizing all of these, it is recommended that you read the [docs](https://github.com/testing-library/user-event) to find the method best suited for your needs.
 
 ## Exercise
 
-1. Suppose we wish to post a new thought with the text content `'Oreos are delicious'`. Before we do that though, we want to make sure that this thought isn’t already in our list of thoughts.
+1. Let’s now use `userEvent` to mimic user interactions in our tests for Passing Thoughts.
 
-   In the first test of `Thought.test.js`, use the `.queryByText()` method and search for a thought with the text content `'Oreos are delicious'`. Assign the result of your query to a variable called `emptyThought`.
+   First, install `@testing-library/user-event@13.2.1` as a developer dependency.
 
-2. In the first test of `Thought.test.js`, use an appropriate assertion to check if the result of your query is `null`.
+   To verify that you have successfully added the package to your project, navigate to **package.json** and check that `@testing-library/user-event` appears in the dependencies array.
 
-   To confirm that you did this properly, `run npm test` in the terminal. The first test should pass!
+2. In **Thought.test.js** import userEvent from `@testing-library/user-event`.
 
-3. The second test of the `Thought.test.js` file mimics a user posting a thought with the text content `'Oreos are delicious'` using the `userEvent` library (we’ll cover how you can do this in the next exercise!).
+3. In the first test of** Thought.test.js**, we would like to remove the thought with the text `'This is a place for your passing thoughts'` that is added as the first thought when the application first renders (refresh the browser to see it).
+   We’ve started this test for you:
 
-   Below, we use the `.getByText()` method to assert that the thought is present in the DOM. However, since the thought is getting posted asynchronously, `.getByText()` is unable to retrieve it and the test is failing (confirm for yourself by running npm test).
+   1. We render the App component
+   2. We then grab the first '×' button.
+   3. Finally, later in the test, we check to see if that element is null.
 
-   Replace the `.getByText()` method with a call to the appropriate query variant such that the test waits for the element with the text `'Oreos are delicious'` to appear.
+   This test will fail unless we mimic clicking on the button in between steps 2 and 3 (verify this by running `npm test`).
 
-4. Run `npm test` in your terminal
+   Use a method from the `userEvent` object to mimic a user pressing the retrieved `button` so that the final `expect()` assertion passes. Then, run `npm test` to see that the first test now passes!
+
+4. In the second test of **Thought.test.js** file we’d like to mimic adding a new thought. We’ve started this test for you:
+
+   1. At the top of the test, we render App
+   2. Then we grab the `input` element where a user can type the thought and the `submit` button to add the thought.
+   3. At the end of the test we assert that a thought with the text `'Did I forget my keys?'` was added to the DOM.
+   4. This test will fail unless we mimic typing into the input and clicking the `submit` button in between steps 2 and 3.
+
+   First, use a method from the `userEvent` object to mimic a user typing into this `input` element with the text `'Did I forget my keys?'`.
+
+5. Now that we’ve mimicked a user typing `'Did I forget my keys'`, it’s time for us to post this thought by clicking the `submit` button. In the second test of `Thought.test.js`, simulate a user clicking the `submit` button by using a method from the `userEvent` object.
+
+6. Run npm test in your terminal
